@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in — MarkItDown</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-box panel">
+      <h1>MarkItDown</h1>
+      <form method="post" action="/login">
+        <input type="password" name="password" placeholder="Password" autofocus required />
+        <button type="submit">Sign in</button>
+        <div id="login-error" class="status-line error" style="display:none">Incorrect password.</div>
+      </form>
+    </div>
+  </div>
+  <script>
+    if (location.search.includes("error=1")) {
+      document.getElementById("login-error").style.display = "block";
+    }
+    document.querySelector("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      const res = await fetch("/login", { method: "POST", body: form });
+      if (res.redirected) {
+        location.href = res.url;
+      } else if (!res.ok) {
+        document.getElementById("login-error").style.display = "block";
+      } else {
+        location.href = "/";
+      }
+    });
+  </script>
+</body>
+</html>

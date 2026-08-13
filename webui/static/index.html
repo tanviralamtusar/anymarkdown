@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MarkItDown</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <h1>MarkItDown</h1>
+      <a href="/logout" id="logout-link">Sign out</a>
+    </header>
+
+    <div class="panel">
+      <div id="dropzone" class="dropzone">
+        <p><strong>Drop files here</strong> or click to choose</p>
+        <p class="hint">PDF, Word, PowerPoint, Excel, images, audio, HTML, CSV, JSON, ZIP, EPUB, and more</p>
+        <input id="file-input" type="file" multiple hidden />
+      </div>
+      <div id="file-list"></div>
+
+      <div class="divider">or convert a URL / YouTube link</div>
+      <div class="url-row">
+        <input id="url-input" type="url" placeholder="https://example.com/document.pdf" />
+      </div>
+
+      <div class="actions">
+        <button id="convert-btn">Convert</button>
+      </div>
+      <div id="status" class="status-line"></div>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
