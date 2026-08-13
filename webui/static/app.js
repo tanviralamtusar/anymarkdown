@@ -3,11 +3,14 @@ const fileInput = document.getElementById("file-input");
 const fileListEl = document.getElementById("file-list");
 const urlInput = document.getElementById("url-input");
 const convertBtn = document.getElementById("convert-btn");
+const clearBtn = document.getElementById("clear-btn");
+const downloadAllBtn = document.getElementById("download-all-btn");
 const statusEl = document.getElementById("status");
 const resultsEl = document.getElementById("results");
 const logoutLink = document.getElementById("logout-link");
 
 let selectedFiles = [];
+let lastResults = [];
 
 function renderFileList() {
   if (selectedFiles.length === 0) {
@@ -74,6 +77,15 @@ function suggestedFilename(name) {
   return `${base}.md`;
 }
 
+function downloadMarkdown(name, markdown) {
+  const blob = new Blob([markdown], { type: "text/markdown" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = suggestedFilename(name);
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 function renderResults(results) {
   resultsEl.innerHTML = "";
   for (const r of results) {
@@ -102,14 +114,7 @@ function renderResults(results) {
       const downloadBtn = document.createElement("button");
       downloadBtn.className = "secondary";
       downloadBtn.textContent = "Download .md";
-      downloadBtn.addEventListener("click", () => {
-        const blob = new Blob([r.markdown], { type: "text/markdown" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = suggestedFilename(r.name);
-        a.click();
-        URL.revokeObjectURL(a.href);
-      });
+      downloadBtn.addEventListener("click", () => downloadMarkdown(r.name, r.markdown));
 
       btns.appendChild(copyBtn);
       btns.appendChild(downloadBtn);
@@ -133,6 +138,25 @@ function renderResults(results) {
     resultsEl.appendChild(card);
   }
 }
+
+clearBtn.addEventListener("click", () => {
+  selectedFiles = [];
+  fileInput.value = "";
+  renderFileList();
+  urlInput.value = "";
+  resultsEl.innerHTML = "";
+  lastResults = [];
+  downloadAllBtn.disabled = true;
+  statusEl.textContent = "";
+  statusEl.className = "status-line";
+});
+
+downloadAllBtn.addEventListener("click", () => {
+  const ok = lastResults.filter((r) => !r.error);
+  ok.forEach((r, i) => {
+    setTimeout(() => downloadMarkdown(r.name, r.markdown), i * 150);
+  });
+});
 
 convertBtn.addEventListener("click", async () => {
   const url = urlInput.value.trim();
@@ -165,6 +189,8 @@ convertBtn.addEventListener("click", async () => {
       throw new Error(body.detail || `Request failed (${res.status})`);
     }
     const data = await res.json();
+    lastResults = data.results;
+    downloadAllBtn.disabled = !data.results.some((r) => !r.error);
     renderResults(data.results);
     statusEl.textContent = `Converted ${data.results.length} item(s).`;
   } catch (err) {
