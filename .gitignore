@@ -167,3 +167,7 @@ cython_debug/
 src/.DS_Store
 .DS_Store
 .cursorrules
+
+# Claude Code local state and agent worktrees
+.claude/worktrees/
+.claude/settings.local.json
