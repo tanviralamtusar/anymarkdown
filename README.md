@@ -1,8 +1,10 @@
-# MarkItDown
+# anymarkdown
 
 [![PyPI](https://img.shields.io/pypi/v/markitdown.svg)](https://pypi.org/project/markitdown/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dd/markitdown)
 [![Built by AutoGen Team](https://img.shields.io/badge/Built%20by-AutoGen%20Team-blue)](https://github.com/microsoft/autogen)
+
+> This project is based on [MarkItDown](https://github.com/microsoft/markitdown) by Microsoft, licensed under the MIT License. It adds a self-hostable `webui/` (FastAPI-based web interface with auth, file upload, and Docker deployment) on top of the upstream conversion library. All credit for the core conversion engine goes to Microsoft and the MarkItDown/AutoGen team.
 
 > [!IMPORTANT]
 > MarkItDown performs I/O with the privileges of the current process. Like open() or requests.get(), it will access resources that the process itself can access. Sanitize your inputs in untrusted environments, and call the narrowest `convert_*` function needed for your use case (e.g., `convert_stream()`, or `convert_local()`). See the [Security Considerations](#security-considerations) section of the documentation for more information.
