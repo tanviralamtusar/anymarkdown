@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir \
     "uvicorn[standard]" \
     python-multipart \
     itsdangerous \
+    python-docx \
     openai
 
 # Default USERID and GROUPID, override at build time if needed

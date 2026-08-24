@@ -16,7 +16,8 @@
     <div class="panel">
       <div id="dropzone" class="dropzone">
         <p><strong>Drop files here</strong> or click to choose</p>
-        <p class="hint">PDF, Word, PowerPoint, Excel, images, audio, HTML, CSV, JSON, ZIP, EPUB, and more</p>
+        <p class="hint">PDF, Word, PowerPoint, Excel, images, audio, HTML, CSV, JSON, ZIP, EPUB, Markdown, and more</p>
+        <p class="hint">Results download as Markdown (.md) or Word (.docx)</p>
         <input id="file-input" type="file" multiple hidden />
       </div>
       <div id="file-list"></div>
@@ -28,6 +29,13 @@
 
       <div class="actions">
         <button id="clear-btn" class="secondary" type="button">Clear all</button>
+        <label class="format-picker" for="download-format">
+          Download all as
+          <select id="download-format">
+            <option value="md">.md</option>
+            <option value="docx">.docx</option>
+          </select>
+        </label>
         <button id="download-all-btn" class="secondary" type="button" disabled>Download all</button>
         <button id="convert-btn">Convert</button>
       </div>

@@ -5,6 +5,7 @@ const urlInput = document.getElementById("url-input");
 const convertBtn = document.getElementById("convert-btn");
 const clearBtn = document.getElementById("clear-btn");
 const downloadAllBtn = document.getElementById("download-all-btn");
+const downloadFormat = document.getElementById("download-format");
 const statusEl = document.getElementById("status");
 const resultsEl = document.getElementById("results");
 const logoutLink = document.getElementById("logout-link");
@@ -66,7 +67,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function suggestedFilename(name) {
+function suggestedFilename(name, extension) {
   try {
     const url = new URL(name);
     name = url.pathname.split("/").filter(Boolean).pop() || url.hostname;
@@ -74,16 +75,42 @@ function suggestedFilename(name) {
     // not a URL, use as-is
   }
   const base = name.replace(/\.[^./]+$/, "") || "converted";
-  return `${base}.md`;
+  return `${base}.${extension}`;
+}
+
+function saveBlob(blob, filename) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function downloadMarkdown(name, markdown) {
-  const blob = new Blob([markdown], { type: "text/markdown" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = suggestedFilename(name);
-  a.click();
-  URL.revokeObjectURL(a.href);
+  saveBlob(new Blob([markdown], { type: "text/markdown" }), suggestedFilename(name, "md"));
+}
+
+async function downloadDocx(name, markdown) {
+  const formData = new FormData();
+  formData.append("markdown", markdown);
+  formData.append("name", name);
+
+  const res = await fetch("/api/to-docx", { method: "POST", body: formData });
+  if (res.status === 401) {
+    location.href = "/login";
+    return;
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `Could not build .docx (${res.status})`);
+  }
+  saveBlob(await res.blob(), suggestedFilename(name, "docx"));
+}
+
+function download(name, markdown, format) {
+  return format === "docx"
+    ? downloadDocx(name, markdown)
+    : Promise.resolve(downloadMarkdown(name, markdown));
 }
 
 function renderResults(results) {
@@ -111,13 +138,31 @@ function renderResults(results) {
         setTimeout(() => (copyBtn.textContent = "Copy"), 1500);
       });
 
-      const downloadBtn = document.createElement("button");
-      downloadBtn.className = "secondary";
-      downloadBtn.textContent = "Download .md";
-      downloadBtn.addEventListener("click", () => downloadMarkdown(r.name, r.markdown));
+      const mdBtn = document.createElement("button");
+      mdBtn.className = "secondary";
+      mdBtn.textContent = "Download .md";
+      mdBtn.addEventListener("click", () => downloadMarkdown(r.name, r.markdown));
+
+      const docxBtn = document.createElement("button");
+      docxBtn.className = "secondary";
+      docxBtn.textContent = "Download .docx";
+      docxBtn.addEventListener("click", async () => {
+        docxBtn.disabled = true;
+        docxBtn.textContent = "Building…";
+        try {
+          await downloadDocx(r.name, r.markdown);
+        } catch (err) {
+          statusEl.textContent = err.message || String(err);
+          statusEl.className = "status-line error";
+        } finally {
+          docxBtn.disabled = false;
+          docxBtn.textContent = "Download .docx";
+        }
+      });
 
       btns.appendChild(copyBtn);
-      btns.appendChild(downloadBtn);
+      btns.appendChild(mdBtn);
+      btns.appendChild(docxBtn);
       header.appendChild(btns);
     }
 
@@ -151,11 +196,29 @@ clearBtn.addEventListener("click", () => {
   statusEl.className = "status-line";
 });
 
-downloadAllBtn.addEventListener("click", () => {
+downloadAllBtn.addEventListener("click", async () => {
+  const format = downloadFormat.value;
   const ok = lastResults.filter((r) => !r.error);
-  ok.forEach((r, i) => {
-    setTimeout(() => downloadMarkdown(r.name, r.markdown), i * 150);
-  });
+
+  downloadAllBtn.disabled = true;
+  const label = downloadAllBtn.textContent;
+  downloadAllBtn.textContent = "Downloading…";
+
+  try {
+    for (const r of ok) {
+      await download(r.name, r.markdown, format);
+      // Browsers drop downloads fired back-to-back; space them out a little.
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    statusEl.textContent = `Downloaded ${ok.length} .${format} file(s).`;
+    statusEl.className = "status-line";
+  } catch (err) {
+    statusEl.textContent = err.message || String(err);
+    statusEl.className = "status-line error";
+  } finally {
+    downloadAllBtn.textContent = label;
+    downloadAllBtn.disabled = ok.length === 0;
+  }
 });
 
 convertBtn.addEventListener("click", async () => {
